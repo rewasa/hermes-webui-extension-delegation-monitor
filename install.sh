@@ -14,7 +14,7 @@ mkdir -p "${TARGET}"
 
 # --- Copy extension files ---
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-for f in manifest.json app.js app.css refresh.py; do
+for f in manifest.json locales.js app.js app.css refresh.py; do
   if [ ! -f "${SCRIPT_DIR}/${f}" ]; then
     echo "ERROR: ${f} not found in ${SCRIPT_DIR}" >&2
     exit 1

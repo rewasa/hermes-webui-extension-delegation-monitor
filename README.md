@@ -50,8 +50,10 @@ A Python script that reads delegation data from Hermes' internal state and write
 - `data/delegations.json` — summary of all delegations
 - `data/logs/<delegation_id>.json` — full transcript for each delegation
 
-### Frontend: `app.js` + `app.css`
+### Frontend: `locales.js` + `app.js` + `app.css`
 Vanilla JavaScript (no build step, no framework) that runs in the hermes-webui sidebar. It polls the static JSON files via same-origin `fetch()` and renders the panel.
+
+`locales.js` is loaded before `app.js` and registers the extension's UI strings in the WebUI's global `LOCALES` object, so every label follows the language selected in hermes-webui.
 
 ### Why a static JSON file?
 
