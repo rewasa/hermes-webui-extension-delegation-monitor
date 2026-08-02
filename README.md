@@ -4,6 +4,8 @@ A live panel for [hermes-webui](https://github.com/nesquena/hermes-webui) that s
 
 ![Delegation Monitor](docs/screenshot.png)
 
+*Screenshot shows example data.*
+
 ## Features
 
 - **Sidebar Button** — shows a running count of active delegations (e.g. "Delegation Monitor (3 running)")
@@ -55,7 +57,7 @@ Vanilla JavaScript (no build step, no framework) that runs in the hermes-webui s
 
 You might wonder why the frontend doesn't fetch delegation data directly from the Hermes API at `http://127.0.0.1:8787`. The reason is **Mixed Content blocking**:
 
-When hermes-webui is served over HTTPS (e.g. via Cloudflare Tunnel at `https://hermes.selly.dev`), the browser blocks `fetch()` calls to `http://127.0.0.1:8787` because the page is secure but the target is not. Empirically measured:
+When hermes-webui is served over HTTPS (e.g. via Cloudflare Tunnel at `https://hermes.example.com`), the browser blocks `fetch()` calls to `http://127.0.0.1:8787` because the page is secure but the target is not. Empirically measured:
 - Fetch from HTTPS to `http://127.0.0.1:8787` → **timeout after 15 seconds** (blocked by Mixed Content)
 - Fetch to a dead port (`http://127.0.0.1:59999`) → **"Failed to fetch" in 3ms** (immediate rejection)
 

@@ -104,12 +104,15 @@
       return;
     }
 
-    // Rows — running first (already sorted by API, but ensure)
+    // Rows — running first, dann completed/failed/stale; innerhalb gleicher
+    // Gruppe die neuesten zuerst.
+    // Hinweis: `order[state] || 99` waere hier falsch, weil running===0 und
+    // 0 || 99 in JS zu 99 wird. Deshalb explizite Pruefung.
     var rows = data.delegations.slice();
     rows.sort(function(a, b) {
       var order = {running:0, completed:1, failed:2, stale:3};
-      var oa = order[a.state] || 99;
-      var ob = order[b.state] || 99;
+      var oa = (a && order.hasOwnProperty(a.state)) ? order[a.state] : 99;
+      var ob = (b && order.hasOwnProperty(b.state)) ? order[b.state] : 99;
       if (oa !== ob) return oa - ob;
       return (b.dispatched_at || 0) - (a.dispatched_at || 0);
     });
