@@ -1,0 +1,1 @@
+{"id":"delegation-monitor","name":"Delegation Monitor","version":"1.0.0","author":"Renato Wasescha","homepage":"https://github.com/rewasa/hermes-webui-extension-delegation-monitor","description":"Live panel for hermes-webui showing running and recent delegate_task subagent delegations, with click-through to live transcripts","scripts":["app.js"],"stylesheets":["app.css"]}
