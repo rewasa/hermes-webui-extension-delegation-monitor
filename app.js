@@ -9,6 +9,17 @@
   var STALE_WARN_SECS = 60;       /* warn if data older than 60s */
   var MAX_GOAL_LEN = 80;
 
+  /* ── i18n helper ── */
+  function T(key, fallback, arg) {
+    try {
+      if (typeof window.t === 'function') {
+        var v = window.t(key, arg);
+        if (v && v !== key) return v;
+      }
+    } catch (_) {}
+    return fallback;
+  }
+
   /* ── State ── */
   var panelOpen = false;
   var pollTimer = null;
@@ -43,7 +54,7 @@
   }
 
   function fmtTime(ts) {
-    if (!ts) return '—';
+    if (!ts) return '\u2014';
     var d = new Date(ts * 1000);
     return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
   }
@@ -53,7 +64,7 @@
     var age = (Date.now() / 1000) - ts;
     if (age < STALE_WARN_SECS) return '';
     var m = Math.round(age / 60);
-    return 'Daten ' + m + 'm alt';
+    return T('dlgmon_age_stale', '{0} min old', m);
   }
 
   function runningCount(data) {
@@ -70,6 +81,12 @@
     return typeof id === 'string' && /^[A-Za-z0-9_-]+$/.test(id);
   }
 
+  /* ── Task count display ── */
+  function taskCountText(n) {
+    n = n || 0;
+    return n === 1 ? T('dlgmon_task_one', '1 task') : T('dlgmon_tasks', '{0} tasks', n);
+  }
+
   /* ── Render panel content ── */
 
   function renderPanel(data) {
@@ -84,7 +101,7 @@
     // Header
     var ageText = fmtAge(data && data.generated_at);
     html += '<div class="dlgmon-header">';
-    html += '<span>Delegationen</span>';
+    html += '<span>' + T('dlgmon_title', 'Delegations') + '</span>';
     if (ageText) {
       html += '<span class="dlgmon-header-stale">' + esc(ageText) + '</span>';
     }
@@ -92,14 +109,14 @@
 
     // Error state
     if (data && data.error) {
-      html += '<div class="dlgmon-error">Fehler: ' + esc(data.error) + '</div>';
+      html += '<div class="dlgmon-error">' + T('dlgmon_error', 'Error: {0}', esc(data.error)) + '</div>';
       panel.innerHTML = html;
       return;
     }
 
     // Empty state
     if (!data || !data.delegations || data.delegations.length === 0) {
-      html += '<div class="dlgmon-empty">Keine Delegationen vorhanden.</div>';
+      html += '<div class="dlgmon-empty">' + T('dlgmon_empty', 'No delegations yet.') + '</div>';
       panel.innerHTML = html;
       return;
     }
@@ -122,7 +139,7 @@
       var goal = '';
       if (d.tasks && d.tasks.length > 0 && d.tasks[0].goal) {
         goal = d.tasks[0].goal;
-        if (goal.length > MAX_GOAL_LEN) goal = goal.substring(0, MAX_GOAL_LEN) + '…';
+        if (goal.length > MAX_GOAL_LEN) goal = goal.substring(0, MAX_GOAL_LEN) + '\u2026';
       }
       var statusClass = 'dlgmon-status--' + (d.state || 'unknown');
       var duration = fmtDuration(d.dispatched_at, d.completed_at);
@@ -131,11 +148,11 @@
       html += '<div class="dlgmon-row dlgmon-row-clickable" tabindex="0" role="button" data-dlgmon-id="' + esc(d.delegation_id) + '">';
       html += '<span class="dlgmon-status ' + statusClass + '"></span>';
       html += '<div class="dlgmon-content">';
-      html += '<div class="dlgmon-goal" title="' + esc(goal) + '">' + esc(goal || '(kein Ziel)') + '</div>';
+      html += '<div class="dlgmon-goal" title="' + esc(goal) + '">' + esc(goal || T('dlgmon_no_goal', '(no goal)')) + '</div>';
       html += '<div class="dlgmon-meta">';
-      html += '<span class="dlgmon-meta-item">' + esc(d.state) + '</span>';
+      html += '<span class="dlgmon-meta-item">' + esc(T('dlgmon_state_' + d.state, d.state)) + '</span>';
       html += '<span class="dlgmon-meta-item">' + esc(duration) + '</span>';
-      html += '<span class="dlgmon-meta-item">' + (d.task_count || 0) + ' Tasks</span>';
+      html += '<span class="dlgmon-meta-item">' + taskCountText(d.task_count) + '</span>';
       html += '<span class="dlgmon-meta-item">' + timeStr + '</span>';
       html += '</div></div></div>';
     }
@@ -199,7 +216,7 @@
 
     var html = renderDetailHeader(delegation, delegationId);
     html += '<div class="dlgmon-detail-body">';
-    html += '<div class="dlgmon-detail-loading">Lade Transkript…</div>';
+    html += '<div class="dlgmon-detail-loading">' + T('dlgmon_loading_transcript', 'Loading transcript\u2026') + '</div>';
     html += '</div>';
     panel.innerHTML = html;
 
@@ -228,13 +245,13 @@
     }
 
     var html = '<div class="dlgmon-detail-header">';
-    html += '<button class="dlgmon-back-btn" id="dlgmon-back-btn" title="Zurück zur Liste">← Zurück</button>';
+    html += '<button class="dlgmon-back-btn" id="dlgmon-back-btn" title="' + esc(T('dlgmon_back_title', 'Back to list')) + '">' + T('dlgmon_back', '\u2190 Back') + '</button>';
     html += '<div class="dlgmon-detail-title" title="' + esc(goal) + '">' + esc(goal || delegationId) + '</div>';
     html += '<div class="dlgmon-detail-meta">';
     html += '<span class="dlgmon-status dlgmon-status--' + esc(state) + '"></span>';
-    html += '<span>' + esc(state) + '</span>';
-    html += '<span> · ' + esc(duration) + '</span>';
-    html += '<span> · ' + taskCount + ' Tasks</span>';
+    html += '<span>' + esc(T('dlgmon_state_' + state, state)) + '</span>';
+    html += '<span> \u00b7 ' + esc(duration) + '</span>';
+    html += '<span> \u00b7 ' + taskCountText(taskCount) + '</span>';
     html += '</div>';
 
     // Task tabs if multiple tasks
@@ -242,7 +259,7 @@
       html += '<div class="dlgmon-task-tabs">';
       for (var t = 0; t < taskCount; t++) {
         var activeClass = (t === detailCurrentTask) ? ' dlgmon-task-tab--active' : '';
-        html += '<button class="dlgmon-task-tab' + activeClass + '" data-dlgmon-task="' + t + '">Task ' + (t + 1) + '</button>';
+        html += '<button class="dlgmon-task-tab' + activeClass + '" data-dlgmon-task="' + t + '">' + T('dlgmon_task_tab', 'Task {0}', t + 1) + '</button>';
       }
       html += '</div>';
     }
@@ -264,23 +281,23 @@
             var logData = JSON.parse(xhr.responseText);
             renderTranscript(logData, delegation);
           } catch (e) {
-            renderTranscriptError('Transkript konnte nicht gelesen werden.');
+            renderTranscriptError(T('dlgmon_transcript_error', 'Transcript could not be read.'));
           }
         } else if (xhr.status === 404) {
-          renderTranscriptError('Kein Transkript verfügbar.');
+          renderTranscriptError(T('dlgmon_no_transcript', 'No transcript available.'));
         } else {
-          renderTranscriptError('Fehler beim Laden (HTTP ' + xhr.status + ').');
+          renderTranscriptError(T('dlgmon_load_error', 'Load failed (HTTP {0}).', xhr.status));
         }
       };
       xhr.onerror = function() {
-        renderTranscriptError('Kein Transkript verfügbar.');
+        renderTranscriptError(T('dlgmon_no_transcript', 'No transcript available.'));
       };
       xhr.ontimeout = function() {
-        renderTranscriptError('Zeitüberschreitung beim Laden.');
+        renderTranscriptError(T('dlgmon_timeout', 'Request timed out.'));
       };
       xhr.send();
     } catch (e) {
-      renderTranscriptError('Kein Transkript verfügbar.');
+      renderTranscriptError(T('dlgmon_no_transcript', 'No transcript available.'));
     }
   }
 
@@ -300,13 +317,13 @@
     }
 
     if (!taskData || !taskData.lines || taskData.lines.length === 0) {
-      body.innerHTML = '<div class="dlgmon-detail-empty">Kein Transkript verfügbar.</div>';
+      body.innerHTML = '<div class="dlgmon-detail-empty">' + T('dlgmon_no_transcript', 'No transcript available.') + '</div>';
       return;
     }
 
     var html = '';
     if (taskData.truncated) {
-      html += '<div class="dlgmon-truncated-hint">… frühere Zeilen gekürzt (' + formatBytes(taskData.bytes_total) + ' total)</div>';
+      html += '<div class="dlgmon-truncated-hint">' + T('dlgmon_truncated', '\u2026 earlier lines truncated ({0} total)', formatBytes(taskData.bytes_total)) + '</div>';
     }
 
     html += '<div class="dlgmon-transcript" id="dlgmon-transcript">';
@@ -412,7 +429,7 @@
               var delegation = findDelegationById(detailDelegationId);
               var headerHtml = renderDetailHeader(delegation, detailDelegationId);
               var oldBody = panel.querySelector('.dlgmon-detail-body');
-              var bodyHtml = oldBody ? oldBody.innerHTML : '<div class="dlgmon-detail-loading">Lade Transkript…</div>';
+              var bodyHtml = oldBody ? oldBody.innerHTML : '<div class="dlgmon-detail-loading">' + T('dlgmon_loading_transcript', 'Loading transcript\u2026') + '</div>';
               panel.innerHTML = headerHtml + '<div class="dlgmon-detail-body">' + bodyHtml + '</div>';
               fetchTranscript(detailDelegationId, delegation);
             }
@@ -468,7 +485,7 @@
       badge.textContent = n;
       badge.style.display = n > 0 ? 'inline-flex' : 'none';
     }
-    btn.title = 'Delegation Monitor (' + n + ' running)';
+    btn.title = T('dlgmon_btn_title', 'Delegation Monitor ({0} running)', n);
   }
 
   function updatePanel(data) {
@@ -572,7 +589,7 @@
     var btn = document.createElement('button');
     btn.id = 'dlgmon-btn';
     btn.className = 'panel-head-btn has-tooltip has-tooltip--bottom-right';
-    btn.title = 'Delegation Monitor (0 running)';
+    btn.title = T('dlgmon_btn_title', 'Delegation Monitor ({0} running)', 0);
     btn.setAttribute('aria-label', 'Delegation Monitor');
     btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:14px;height:14px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span id="dlgmon-badge" class="dlgmon-badge" style="display:none">0</span>';
     btn.addEventListener('click', togglePanel);
@@ -581,7 +598,7 @@
     var panel = document.createElement('div');
     panel.id = 'dlgmon-panel';
     panel.className = 'dlgmon-panel';
-    panel.innerHTML = '<div class="dlgmon-empty">Lade Daten…</div>';
+    panel.innerHTML = '<div class="dlgmon-empty">' + T('dlgmon_loading', 'Loading data\u2026') + '</div>';
 
     // 3. Wrapper nur fuer den Button. Das Panel kommt an document.body,
     //    weil #panelChat overflow:hidden hat und es sonst abgeschnitten wird.

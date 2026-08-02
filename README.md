@@ -73,6 +73,14 @@ The `data/` directory contains real delegation targets and full transcripts of s
 - Python 3
 - macOS (launchd) or Linux (systemd / cron)
 
+## Localization
+
+The extension automatically follows the WebUI language setting. All visible UI strings are translated via the `t()` i18n system and update on the next panel render after a language switch.
+
+Supported languages (15): English, German, French, Spanish, Italian, Portuguese, Russian, Simplified Chinese, Traditional Chinese, Japanese, Korean, Czech, Turkish, Polish, Vietnamese.
+
+When a translation key is missing for the active language, the extension falls back to English. If the i18n system is unavailable (older WebUI version), hardcoded English fallback texts are used.
+
 ## Author
 
 **Renato Wasescha** — [https://github.com/rewasa](https://github.com/rewasa)
