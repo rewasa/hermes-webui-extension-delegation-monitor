@@ -1,1 +1,62 @@
-{"id":"delegation-monitor","name":"Delegation Monitor","version":"1.1.0","author":"Renato Wasescha","homepage":"https://github.com/rewasa/hermes-webui-extension-delegation-monitor","description":"Live panel for hermes-webui showing running and recent delegate_task subagent delegations, with click-through to live transcripts","scripts":["locales.js","app.js"],"stylesheets":["app.css"]}
+{
+    "id": "delegation-monitor",
+    "name": "Delegation Monitor",
+    "version": "1.1.0",
+    "author": "Renato Wasescha",
+    "homepage": "https://github.com/rewasa/hermes-webui-extension-delegation-monitor",
+    "description": "Live panel for hermes-webui showing running and recent delegate_task subagent delegations, with click-through to live transcripts",
+    "scripts": [
+        "locales.js",
+        "app.js"
+    ],
+    "stylesheets": [
+        "app.css"
+    ],
+    "assets": {
+        "scripts": [
+            "locales.js",
+            "app.js"
+        ],
+        "stylesheets": [
+            "app.css"
+        ]
+    },
+    "capabilities": [
+        "manifest-bundle"
+    ],
+    "lifecycle": {
+        "webui_restart_required": false,
+        "sidecar_start_required": false,
+        "native_host_start_required": false,
+        "native_host_autostart": "none"
+    },
+    "screenshots": [
+        "docs/screenshot.png"
+    ],
+    "permissions": {
+        "webui_api": {
+            "read": [],
+            "write": []
+        },
+        "webui_navigation": false,
+        "dom": {
+            "owned": true,
+            "mutates_core_views": true
+        },
+        "storage": {
+            "owned": [
+                "hwx-delegation-monitor"
+            ],
+            "shared_webui_keys": []
+        },
+        "loopback_sidecar": false,
+        "native_host": false,
+        "filesystem": {
+            "arbitrary": false,
+            "serves_bundled_assets": true
+        },
+        "network_external": false
+    },
+    "entry_path": "extensions/delegation-monitor/extension.json",
+    "runtime_manifest_path": "extensions/delegation-monitor/manifest.json"
+}

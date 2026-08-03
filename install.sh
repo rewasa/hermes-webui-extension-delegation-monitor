@@ -4,7 +4,45 @@
 set -eu
 
 # --- Resolve extension directory ---
-EXT_ROOT="${HERMES_WEBUI_EXTENSION_ROOT:-$HOME/.hermes/webui/extensions}"
+# Priority:
+#   1. $HERMES_WEBUI_EXTENSION_DIR (explicit override)
+#   2. $HERMES_HOME/webui/extensions
+#   3. $HOME/.hermes/profiles/<profile>/webui/extensions  (profile-aware)
+#   4. $HOME/.hermes/webui/extensions  (legacy fallback)
+if [ -n "${HERMES_WEBUI_EXTENSION_DIR:-}" ]; then
+    EXT_ROOT="${HERMES_WEBUI_EXTENSION_DIR}"
+elif [ -n "${HERMES_HOME:-}" ]; then
+    EXT_ROOT="${HERMES_HOME}/webui/extensions"
+else
+    # Try to detect the active Hermes profile
+    _PROFILE="${HERMES_PROFILE:-}"
+    if [ -z "${_PROFILE}" ]; then
+        # Count profile directories under $HOME/.hermes/profiles/
+        _PROFILE_COUNT=0
+        _PROFILE_DIR=""
+        if [ -d "$HOME/.hermes/profiles" ]; then
+            for _d in "$HOME/.hermes/profiles"/*/; do
+                _BASENAME="$(basename "${_d}")"
+                if [ "${_BASENAME}" != "worker" ] && [ "${_BASENAME}" != "default" ]; then
+                    # Skip non-standard names unless it's the only one
+                    :
+                fi
+                _PROFILE_COUNT=$((_PROFILE_COUNT + 1))
+                _PROFILE_DIR="${_d}"
+            done
+        fi
+        if [ "${_PROFILE_COUNT}" -eq 1 ] && [ -d "${_PROFILE_DIR}webui" ]; then
+            _PROFILE="$(basename "${_PROFILE_DIR}")"
+        elif [ -d "$HOME/.hermes/profiles/default/webui" ]; then
+            _PROFILE="default"
+        fi
+    fi
+    if [ -n "${_PROFILE}" ] && [ -d "$HOME/.hermes/profiles/${_PROFILE}/webui" ]; then
+        EXT_ROOT="$HOME/.hermes/profiles/${_PROFILE}/webui/extensions"
+    else
+        EXT_ROOT="$HOME/.hermes/webui/extensions"
+    fi
+fi
 TARGET="${EXT_ROOT}/delegation-monitor"
 
 echo "==> Extension target: ${TARGET}"
@@ -80,7 +118,7 @@ if [ "${UNAME_S}" = "Darwin" ]; then
     <string>/tmp/${LABEL}.stderr.log</string>
     <key>EnvironmentVariables</key>
     <dict>
-        <key>HERMES_WEBUI_EXTENSION_ROOT</key>
+        <key>HERMES_WEBUI_EXTENSION_DIR</key>
         <string>${EXT_ROOT}</string>
     </dict>
 </dict>
@@ -107,12 +145,15 @@ elif [ "${UNAME_S}" = "Linux" ]; then
   echo "  [Service]"
   echo "  Type=oneshot"
   echo "  ExecStart=${PYTHON} ${TARGET}/refresh.py"
-  echo "  Environment=HERMES_WEBUI_EXTENSION_ROOT=${EXT_ROOT}"
+  echo "  Environment=HERMES_WEBUI_EXTENSION_DIR=${EXT_ROOT}"
   echo ""
   echo "Create /etc/systemd/system/delegation-monitor.timer:"
   echo ""
   echo "  [Unit]"
   echo "  Description=Run delegation-monitor every 10s"
+  echo "  [Service]"
+  echo "  Type=oneshot"
+  echo "  ExecStart=${PYTHON} ${TARGET}/refresh.py"
   echo "  [Timer]"
   echo "  OnBootSec=10s"
   echo "  OnUnitActiveSec=10s"
